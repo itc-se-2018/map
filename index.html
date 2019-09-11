@@ -76,6 +76,7 @@
     overflow: hidden;
     opacity: 0.8;
     border-radius: 50%;
+    cursor: pointer;
     transition: 0.2s all;
   }
 
@@ -384,7 +385,7 @@
         maxZoom: 6,
         paddingTopLeft: [0, 0],
       });
-    }
+    };
     const showStudent = (personId) => {
       const profile = document.querySelector(`#people-container .profile-${personId}`);
       const additionalHtml = profile.querySelector('.additional').outerHTML;
@@ -402,16 +403,12 @@
       }, TIMEOUT_MS);
 
       highlight(feature);
-    }
+    };
     const peoplePromise = CSV.fetch('./businesscard.csv')
-      .then(people => {
-        return people.map((person, id) => ({ ...person, id }));
-      });
+      .then(people => people.map((person, id) => ({ ...person, id })) );
     const countriesPromise = fetch('./countries.geo.json')
       .then(resp => resp.json());
-
     const [people, countries] = await Promise.all([peoplePromise, countriesPromise]);
-
     const countriesPeople = people.reduce((dest, person) => {
       return {
         ...dest,
@@ -426,9 +423,24 @@
     }
 
     const countriesLayer = L.geoJson(countries, {
-      style: style,
+      style: {
+          fillColor: 'rgba(0, 180, 0, 0.5)',
+          weight: 2,
+          opacity: 1,
+          color: 'white',
+          dashArray: '3',
+          fillOpacity: 0.7
+      },
+      filter: (f) => {
+        return !!f.properties.people;
+      },
       onEachFeature: (f, layer) => {
         countryFeaturesById[f.id] = layer;
+
+        if(!f.properties.people) {
+          layer.removeFrom(map);
+          return false;
+        }
 
         //bind click
         layer.on({
@@ -448,12 +460,10 @@
 
                 profileDom.classList.toggle('is-citizen', isCitizen);
               });
-          }
+          },
         });
       },
-    })
-      .addTo(map);
-
+    }).addTo(map);
 
     drawPeople(people);
 
@@ -464,20 +474,16 @@
 
       if(latlng.length !== 2) continue;
 
-      // const icon = L.icon({
-      //   iconUrl: `pics/${person.image}`,
-      //   iconSize:     [50, 50], // size of the icon
-      //   iconAnchor:   [25, 25], // point of the icon which will correspond to marker's location
-      // });
       const marker = L.marker(latlng).addTo(markers);
 
       marker.on('click', () => {
+        cleanupState();
         showStudent(person.id);
       });
     }
 
     map.on('click', () => {
-        cleanupState();
+      cleanupState();
     });
 
     document.querySelectorAll('.profile').forEach(d => {
@@ -500,16 +506,6 @@
 
 	start();
 
-	function style(feature) {
-	    return {
-	        fillColor: 'rgba(0, 180, 0, 0.5)',
-	        weight: 2,
-	        opacity: 1,
-	        color: 'white',
-	        dashArray: '3',
-	        fillOpacity: 0.7
-	    };
-	}
 </script>
 </body>
 </html>
