@@ -1,85 +1,211 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Risk Assesment Map</title>
+	<title>Spatial Engineering 2018 | Bussiness Card</title>
 </head>
 <style type="text/css">
-	body, #map {
-		width: 100vw;
+	body {
+	  display: flex;
+    justify-content: stretch;
+    flex-direction: column;
+  	width: 100vw;
 		height: 100vh;
 		margin: 0;
 		padding: 0;
 	}
 
-  .profile {
-    width: 100px;
-    height: 100px;
-    text-align: center;
-    border: 1px solid red;
-    float:  left;
+  html, body, * {
+    box-sizing: border-box;
   }
 
-  .profile .additional {
-    background: green;
+  #map {
+    width: 100vw;
+    height: 50vw;
+    /* display: none; */
+  }
+
+  #people-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    align-items: stretch;
+  }
+
+  #people-info-wrapper {
+    position: relative;
+    height: 0;
+    opacity: 0;
+    transition: 1s all;
+  }
+
+  #people-info-wrapper.expanded {
+    opacity: 1;
+    height: 18rem;
+  }
+
+  #people-info-wrapper .close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    background: #eee;
+    padding: 10px 20px;
+  }
+
+  .hide {
     display: none;
   }
 
-  .profile .img {
-    max-height: 100px;
-    max-width: 100px;
+  .profile {
+    padding: 10px;
+    width: 10vw;
+    height: 10vw;
+    text-align: center;
+    float:  left;
   }
+
+   @media only screen and (max-width: 1024px) {
+    .profile {
+      width: 20vw;
+      height: 20vw;
+    }
+   }
+
+  .profile .img {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    opacity: 0.8;
+    border-radius: 50%;
+    transition: 0.2s all;
+  }
+
+  .active .profile .img {
+    opacity: 0.3;
+  }
+
+  .profile.teacher .img {
+    border: 5px solid black;
+  }
+
+  .profile.is-citizen .img {
+    opacity: 1;
+  }
+
+  .profile .img:hover {
+    opacity: 1;
+  }
+
+  .profile .img img {
+    display: inline;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+
+  .profile .additional {
+    display: none;
+  }
+
+  .additional {
+    width: 100%;
+  }
+
+  .additional td {
+    padding: 0.5rem 0;
+  }
+
+  .additional .label {
+    font-weight: bold;
+    width: 20%;
+    text-align: right;
+    padding-right: 1rem;
+  }
+
+  .additional .social .value a {
+    padding-right: 1rem;
+  }
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 <script src="./results.js"></script>
 <body>
-<div id="people-container">
-  <template id="tmpl-person">
-    <div class="profile">
-      <img class="img" src="" />
-      <div class="additional">
-        <div>
-          <strong>Name:</strong>
-          <span class="name"></span>
-        </div>
-        <div>
-          <strong>Bachelors:</strong>
-          <span class="bachelors"></span>
-        </div>
-        <div>
-          <strong>MSc Thesis:</strong>
-          <span class="thesis_topic"></span>
-        </div>
-        <div>
-          <strong>Country:</strong>
-          <span class="country"></span>
-        </div>
-        <div>
-          <strong>Experience:</strong>
-          <span class="experience"></span>
-        </div>
-        <div>
-          <strong>About:</strong>
-          <span class="descr"></span>
-        </div>
-        <div>
-          <strong>Email:</strong>
-          <a href="" class="email"></a>
-        </div>
-        <a href="" class="linkedin"></a>
-      </div>
+<template id="tmpl-person">
+  <div class="profile">
+    <div class="img">
+      <img src="" />
     </div>
-  </template>
+    <table class="additional">
+      <tr class="name">
+        <td class="label">Name:</td>
+        <td class="value"></td>
+      </tr>
+      <tr class="education">
+        <td class="label">Education:</td>
+        <td class="value"></td>
+      </tr>
+      <tr class="research">
+        <td class="label">Research:</td>
+        <td class="value"></td>
+      </tr>
+      <tr class="location">
+        <td class="label">Location:</td>
+        <td class="value"></td>
+      </tr>
+      <tr class="experience">
+        <td class="label">Experience:</td>
+        <td class="value"></td>
+      </tr>
+      <tr class="about">
+        <td class="label">About:</td>
+        <td class="value"></td>
+      </tr>
+      <tr class="email">
+        <td class="label">Email:</td>
+        <td class="value"><a href="" class="email-value"></a></td>
+      </tr>
+      <tr class="social">
+        <td class="label">Social:</td>
+        <td class="value">
+
+        </td>
+      </tr>
+    </table>
+  </div>
+</template>
+<div>
+  <div id="people-container"></div>
+  <div id="people-info-wrapper">
+    <div id="people-info"></div>
+    <a class="close" href="#">Close</a>
+  </div>
 </div>
 <div id="map"></div>
 <script type="text/javascript">
-	var map = L.map('map').setView([0, 60], 3);
+  const INIT_ZOOM = 3;
+  const INIT_CENTER = [20, 60];
+  const TIMEOUT_MS = 1200;
 
-	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-	}).addTo(map);
+  let timeoutId = null;
 
-  // got from: https://stackoverflow.com/a/12785546
+	const map = L.map('map', {
+    center: INIT_CENTER,
+    zoom: INIT_ZOOM,
+    maxZoom: 10,
+  });
+
+  timeoutId = setTimeout(() => {
+    map.invalidateSize(true);
+    map.setView(INIT_CENTER, INIT_ZOOM, {
+      animate: true,
+    });
+  }, TIMEOUT_MS);
+
+  const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  // based on: https://stackoverflow.com/a/12785546
   const CSV = {
     parse: function(csv, reviver) {
         reviver = reviver || function(r, c, v) { return v; };
@@ -145,7 +271,6 @@
     },
   };
 
-
   const drawPeople = (people) => {
     const personTmpl = document.querySelector('#tmpl-person');
     const peopleContainer = document.querySelector('#people-container');
@@ -153,45 +278,131 @@
     people.forEach((person) => {
       const clone = document.importNode(personTmpl.content, true);
 
-      if(person.image) {
-        clone.querySelector('.img').src = `pics/${person.image}`;
+      clone.querySelector('.img img').src = `pics/${person.image}`;
+      clone.querySelector('.img img').alt = `${person.full_name}`;
+
+      if(person.position === 'teacher') {
+        clone.querySelector('.profile').classList.add('teacher');
       }
 
+      person.location = person.city
+        ? `${person.city}, ${person.country}`
+        : `${person.country}`;
+
+      clone.querySelector('.profile').classList.add(`profile-${person.id}`)
       clone.querySelector('.profile').dataset.id = person.id;
-      clone.querySelector('.name').innerHTML = `${person.full_name}`;
-      clone.querySelector('.bachelors').innerHTML = `${person.bachelors}`;
-      clone.querySelector('.country').innerHTML = `${person.country}`;
-      clone.querySelector('.experience').innerHTML = `${person.experience}`;
-      clone.querySelector('.descr').innerHTML = `${person.descr}`;
-      clone.querySelector('.thesis_topic').innerHTML = `${person.thesis_topic}`;
-      clone.querySelector('.email').href = `mailto:${person.email}`;
-      clone.querySelector('.email').innerHTML = `${person.email}`;
-      clone.querySelector('.linkedin').src = `${person.linkein}`;
-      clone.querySelector('.linkedin').innerHTML = `LinkedIn`;
+      clone.querySelector('.profile').dataset.country = person.country_iso;
+      clone.querySelector('.name .value').innerHTML = `${person.full_name}`;
+      clone.querySelector('.education .value').innerHTML = `${person.education}`;
+      clone.querySelector('.location .value').innerHTML = person.location;
+      clone.querySelector('.experience .value').innerHTML = `${person.experience}`;
+      clone.querySelector('.about .value').innerHTML = `${person.about}`;
+      clone.querySelector('.research .value').innerHTML = `${person.research}`;
+      clone.querySelector('.email-value').href = `mailto:${person.email}`;
+      clone.querySelector('.email-value').innerHTML = `${person.email}`;
 
-      clone.querySelector('.profile').addEventListener('click', (event) => {
-        const profile = event.target.closest('.profile');
-        const id = profile.dataset.id;
+      const links = {
+        github: 'GitHub',
+        linkedin: 'LinkedIn',
+        utwente: 'UTwente',
+        personal: '<host>',
+        researchgate: 'ResearchGate',
+      };
 
+      for(const [link, title] of Object.entries(links)) {
+        const href = person[`link_${link}`];
+
+        if(!href) continue;
+
+        const a = document.createElement('a');
+        const finalTitle = title === '<host>'
+          ? (new URL(href)).host
+          : title;
+
+        a.href = href;
+        a.target = '_blank';
+        a.innerHTML = finalTitle;
+
+        clone.querySelector('.social .value').appendChild(a);
+      }
+
+      if(clone.querySelector('.social .value').children.length === 0) {
+        clone.querySelector('.social').classList.add('hide');
+      }
+
+      const nonRequired = ['education', 'location', 'experience', 'about', 'research', 'email'];
+
+      nonRequired.forEach(field => {
+        if(!person[field]) {
+          clone.querySelector(`.${field}`).classList.add('hide');
+        }
       });
 
       peopleContainer.appendChild(clone);
-
     });
   };
 
 	const start = async () => {
+    const countryFeaturesById = {};
+    const cleanupState = (feat) => {
+      document.querySelector('#people-container').classList.remove('active');
+      document.querySelectorAll('#people-container .profile')
+        .forEach(d => d.classList.remove('is-citizen', 'is-not-citizen'));
+      document.querySelector('#people-info-wrapper').classList.remove('expanded');
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        map.invalidateSize(true);
+        map.setView(INIT_CENTER, INIT_ZOOM, {
+          animate: true,
+        });
+      }, TIMEOUT_MS);
+
+      if(countriesLayer) {
+        for(const feat of Object.values(countryFeaturesById)) {
+          countriesLayer.resetStyle(feat);
+        }
+      }
+    };
+    const highlight = (feature) => {
+      feature.setStyle({
+        color: 'red',
+      });
+    };
+    const flyTo = (feature) => {
+      map.invalidateSize(true);
+      map.fitBounds(feature.getBounds(), {
+        animate: true,
+        maxZoom: 6,
+        paddingTopLeft: [0, 0],
+      });
+    }
+    const showStudent = (personId) => {
+      const profile = document.querySelector(`#people-container .profile-${personId}`);
+      const additionalHtml = profile.querySelector('.additional').outerHTML;
+      const feature = countryFeaturesById[profile.dataset.country];
+
+      profile.classList.add('is-citizen');
+
+      document.querySelector('#people-container').classList.add('active');
+      document.querySelector('#people-info-wrapper').classList.add('expanded');
+      document.querySelector('#people-info').innerHTML = additionalHtml;
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        flyTo(feature);
+      }, TIMEOUT_MS);
+
+      highlight(feature);
+    }
     const peoplePromise = CSV.fetch('./businesscard.csv')
       .then(people => {
-        let id = 1;
-        return people.map(person => ({ ...person, id: id++ }));
+        return people.map((person, id) => ({ ...person, id }));
       });
     const countriesPromise = fetch('./countries.geo.json')
       .then(resp => resp.json());
 
     const [people, countries] = await Promise.all([peoplePromise, countriesPromise]);
-
-    console.log(people, countries)
 
     const countriesPeople = people.reduce((dest, person) => {
       return {
@@ -206,35 +417,84 @@
       }
     }
 
-    L.geoJson(countries, {
+    const countriesLayer = L.geoJson(countries, {
       style: style,
-      onEachFeature: onEachFeature,
+      onEachFeature: (f, layer) => {
+        countryFeaturesById[f.id] = layer;
+
+        //bind click
+        layer.on({
+          click: (event) => {
+            L.DomEvent.stopPropagation(event);
+            const classes = f.properties.people.map(id => `profile-${id}`);
+
+            cleanupState();
+            highlight(layer);
+            clearTimeout(timeoutId);
+            flyTo(layer);
+
+            document.querySelector('#people-container').classList.add('active');
+            document.querySelectorAll('#people-container .profile')
+              .forEach(profileDom => {
+                const isCitizen = f.properties.people.includes(+profileDom.dataset.id);
+
+                profileDom.classList.toggle('is-citizen', isCitizen);
+              });
+          }
+        });
+      },
     })
       .addTo(map);
 
 
     drawPeople(people);
+
+    for(const person of people) {
+      if(!person.latlng) continue;
+
+      const latlng = person.latlng.split('|').map(n => +n);
+
+      if(latlng.length !== 2) continue;
+
+      const icon = L.icon({
+        iconUrl: `pics/${person.image}`,
+        iconSize:     [50, 50], // size of the icon
+        iconAnchor:   [25, 25], // point of the icon which will correspond to marker's location
+      });
+      const marker = L.marker(latlng, { icon: icon }).addTo(map);
+
+      marker.on('click', () => {
+        showStudent(person.id);
+      });
+    }
+
+    map.on('click', () => {
+        cleanupState();
+    });
+
+    document.querySelectorAll('.profile').forEach(d => {
+      d.addEventListener('click', (event) => {
+        cleanupState();
+
+        const profile = event.target.closest('.profile');
+
+        showStudent(profile.dataset.id);
+      });
+    });
+    document.querySelector('#people-info-wrapper .close')
+      .addEventListener('click', () => cleanupState());
+
+    document.body.addEventListener('keypress', function(e) {
+      cleanupState();
+    });
 	};
 
 
 	start();
 
-	function getColor(d) {
-	    return d.people ? 'rgba(0, 180, 0, 0.5)' :
-	                      'rgba(0,0,0,0.2)';
-	}
-
-	function getPriority(d) {
-	    return d > 0.66 ? 'very high' :
-	           d > 0.44  ? 'high' :
-	           d > 0.22  ? 'medium' :
-	           d > 0.11  ? 'low' :
-	                      'very low';
-	}
-
 	function style(feature) {
 	    return {
-	        fillColor: getColor(feature.properties),
+	        fillColor: 'rgba(0, 180, 0, 0.5)',
 	        weight: 2,
 	        opacity: 1,
 	        color: 'white',
@@ -242,26 +502,6 @@
 	        fillOpacity: 0.7
 	    };
 	}
-
-	var popup = L.popup();
-
-	function onEachFeature(f, layer) {
-	    //bind click
-	    layer.on({
-	        click: (e) => {
-            popup
-                .setLatLng(e.latlng)
-                .setContent(`<b>Usage:</b> ${f.properties.usage}
-                	<br><b>Built year:</b> ${f.properties.built_year}
-                	<br><b>Priority:</b> ${getPriority(f.properties.risk_weighted_normalized)}`)
-                .openOn(map);
-	        }
-	    });
-	}
-	// function onMapClick(e) {
-	// 	console.log(arguments)
-	// }
-
 </script>
 </body>
 </html>
