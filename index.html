@@ -126,7 +126,10 @@
 
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script src="./results.js"></script>
 <body>
 <template id="tmpl-person">
@@ -200,6 +203,9 @@
     });
   }, TIMEOUT_MS);
 
+  const markers = L.markerClusterGroup({
+      maxClusterRadius: 70,
+  }).addTo(map);
   const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
@@ -458,12 +464,12 @@
 
       if(latlng.length !== 2) continue;
 
-      const icon = L.icon({
-        iconUrl: `pics/${person.image}`,
-        iconSize:     [50, 50], // size of the icon
-        iconAnchor:   [25, 25], // point of the icon which will correspond to marker's location
-      });
-      const marker = L.marker(latlng, { icon: icon }).addTo(map);
+      // const icon = L.icon({
+      //   iconUrl: `pics/${person.image}`,
+      //   iconSize:     [50, 50], // size of the icon
+      //   iconAnchor:   [25, 25], // point of the icon which will correspond to marker's location
+      // });
+      const marker = L.marker(latlng).addTo(markers);
 
       marker.on('click', () => {
         showStudent(person.id);
