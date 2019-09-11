@@ -287,6 +287,9 @@
       person.location = person.city
         ? `${person.city}, ${person.country}`
         : `${person.country}`;
+      person.email = person.email
+        .replace(/\s\[fancyA\]\s/, '@')
+        .replace(/\s\[dot\]\s/g, '.');
 
       clone.querySelector('.profile').classList.add(`profile-${person.id}`)
       clone.querySelector('.profile').dataset.id = person.id;
